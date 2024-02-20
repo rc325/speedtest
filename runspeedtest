@@ -1,0 +1,62 @@
+#!/bin/bash
+# Ian Boyd 
+# Jan 2024
+# Thanks to Sivel (Matt Martz) for his work on speedtest.py
+
+run_count=3
+run_comment='Running speed test '
+i=0
+initialize=N
+default_filename="result" # Default filename
+
+echo "Would you like to start a new test? (y/N):"
+echo "By default, we will append to the existing output (result)."
+read initialize
+
+output_file="" # Initialize the variable to store the final output filename
+
+# Check if input is 'N', 'n', or empty, and handle accordingly
+if [[ "$initialize" == "N" ]] || [[ "$initialize" == "n" ]] || [[ -z "$initialize" ]]; then
+  echo "Continuing with existing file (result)..."
+  output_file=$default_filename 
+  echo "Date: $(date)" >> $output_file
+  sleep 2
+else
+  echo "Please enter a filename for the speed test results (this works for a single runtime _only):"
+  echo "Hit enter if you wish to use the default name (result)"
+  read custom_filename
+  
+  # If the user does not enter a filename, use the default
+  if [[ -z "$custom_filename" ]]; then
+    custom_filename=$default_filename
+  fi
+  
+  output_file=$custom_filename # Use the user-specified filename
+  
+  echo "Starting a new test, previous data will be removed."
+  rm -f $output_file
+  touch $output_file
+  echo "Date: $(date)" >> $output_file
+  sleep 2
+fi
+
+while [ $i -ne $run_count ];
+do
+   clear
+   echo "Executing speed test $run_count times!!!"
+   echo "To see the output check out $output_file"
+   echo "$run_comment$i"
+   # Append the results of the speed test to the specified output file
+   curl -s https://raw.githubusercontent.com/sivel/speedtest-cli/master/speedtest.py | python3 - >> $output_file
+   ((i++))
+   echo ""
+   echo "====UPLOADS===="
+   # Display line numbers alongside Upload results
+   grep -n "Upload" $output_file
+   echo "====DOWNLOADS===="
+   # Display line numbers alongside Download results
+   grep -n "Download" $output_file
+   echo "====TEST DATES==="
+   # Display line numbers alongside Date entries
+   grep -n "Date" $output_file
+done
